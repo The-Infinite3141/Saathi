@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Saathi — AI Smart Agriculture Dashboard</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="brand-icon">🌱</div><div class="brand-copy"><strong>Saathi</strong><small>Smart Agriculture Companion</small></div></div>
+  <nav class="nav">
+    <button class="active" data-page="dashboard"><span>▦</span><span class="nav-label">Dashboard</span></button>
+    <button data-page="overview"><span>⌂</span><span class="nav-label">Overview</span></button>
+    <button data-page="disease"><span>▧</span><span class="nav-label">Crop Disease</span></button>
+    <button data-page="advisory"><span>♧</span><span class="nav-label">Crop Advisory</span></button>
+    <button data-page="weather"><span>☀</span><span class="nav-label">Weather & Irrigation</span></button>
+  </nav>
+  <div class="side-note"><b>🌿 Farming, made smarter</b>A student-built agriculture dashboard combining trained image classification, weather data and transparent farming rules.</div>
+</aside>
+<main>
+<header class="topbar">
+  <input class="search" id="quickSearch" placeholder="⌕  Ask AI about crops, disease, weather..." aria-label="Quick navigation search">
+  <div class="topright"><span class="pill">● Prototype</span><button class="ghost" id="resetAll">Reset inputs</button></div>
+</header>
+<div class="content">
+<section class="welcome">
+  <div><div class="eyebrow">SMART FARMING • CLASS XII PROJECT</div><h1 id="pageTitle">AI Smart Agriculture</h1><p>Healthy crops, smarter decisions, and more responsible use of resources.</p></div>
+  <div class="datebox">📅 Exhibition: 27 Oct 2026</div>
+</section>
+<section class="stats">
+  <div class="stat"><div class="stat-icon">🌿</div><div><label>Plant health</label><strong id="statPlant">Not analyzed</strong><small>Two-stage image model</small></div></div>
+  <div class="stat"><div class="stat-icon">🌦️</div><div><label>Weather</label><strong id="statWeather">Not loaded</strong><small id="statLocation">Choose a location</small></div></div>
+  <div class="stat"><div class="stat-icon">💧</div><div><label>Soil moisture</label><strong id="statMoisture">50%</strong><small>Simulated input</small></div></div>
+  <div class="stat"><div class="stat-icon">🌾</div><div><label>Crop selected</label><strong id="statCrop">Tomato</strong><small>Advisory profile</small></div></div>
+</section>
+<section class="section active" id="page-dashboard">
+  <div class="grid">
+    <div class="stack">
+      <article class="card">
+        <div class="card-head"><div><h2>Farm Snapshot</h2><p class="sub">A quick view of the current demo inputs and system status.</p></div><span class="tag blue">Dashboard</span></div>
+        <div class="dashboard-kpis">
+          <div class="dash-kpi"><span>🌿</span><small>Last plant result</small><b id="dashPlant">Not analyzed</b></div>
+          <div class="dash-kpi"><span>🌦️</span><small>Weather status</small><b id="dashWeather">Not loaded</b></div>
+          <div class="dash-kpi"><span>💧</span><small>Simulated moisture</small><b id="dashMoisture">50%</b></div>
+          <div class="dash-kpi"><span>🌾</span><small>Selected crop</small><b id="dashCrop">Tomato</b></div>
+        </div>
+        <div class="card-head" style="margin-top:22px"><div><h2>System readiness</h2><p class="sub">Live status of the services used by Saathi.</p></div></div>
+        <div class="advice-list">
+          <div class="advice"><div class="advice-icon">🧠</div><p><b>Plant AI models</b><small id="dashModelStatus">Add your Teachable Machine URLs in Model Setup.</small></p></div>
+          <div class="advice"><div class="advice-icon">🌐</div><p><b>Weather service</b><small id="dashApiStatus">Backend connection will be checked when you request weather.</small></p></div>
+          <div class="advice"><div class="advice-icon">🛡️</div><p><b>Advice engine</b><small>Crop and irrigation suggestions use transparent demo rules, not a trained model.</small></p></div>
+        </div>
+        <button class="primary" data-goto="overview" style="margin-top:16px">Open project tools</button>
+      </article>
+      <article class="card">
+        <div class="card-head"><div><h2>Recent activity</h2><p class="sub">Actions during this browser session.</p></div><span class="tag">Session only</span></div>
+        <div id="activityLog" class="advice-list"><div class="advice"><div class="advice-icon">ℹ️</div><p>Dashboard started.<small>No activity recorded yet.</small></p></div></div>
+      </article>
+    </div>
+    <div class="stack">
+      <article class="card">
+        <div class="card-head"><div><h2>Quick actions</h2><p class="sub">Jump straight to a feature.</p></div></div>
+        <div class="quick-actions">
+          <button class="secondary" data-goto="overview">📷 Analyze a leaf</button>
+          <button class="secondary" data-goto="weather">🌦️ Check weather</button>
+          <button class="secondary" data-goto="advisory">🌱 Crop advisory</button>
+          <button class="secondary" data-goto="weather">💧 Irrigation advice</button>
+        </div>
+      </article>
+      <article class="card">
+        <div class="card-head"><div><h2>Project information</h2><p class="sub">Class XII science exhibition</p></div></div>
+        <div class="advice-list">
+          <div class="advice"><div class="advice-icon">📅</div><p><b>Exhibition date</b><small>27 October 2026</small></p></div>
+          <div class="advice"><div class="advice-icon">💻</div><p><b>Hardware</b><small>Laptop or computer only; no sensors required.</small></p></div>
+          <div class="advice"><div class="advice-icon">💸</div><p><b>Budget</b><small>₹0 target using free tools and services.</small></p></div>
+        </div>
+        <div class="notice">AI predictions are not guaranteed diagnoses. Verify important farming decisions with local agricultural experts.</div>
+      </article>
+    </div>
+  </div>
+</section>
+<section class="section" id="page-overview">
+  <div class="grid">
+    <div class="stack">
+      <article class="card">
+        <div class="card-head"><div><h2>AI Crop Disease Detection</h2><p class="sub">Upload a leaf photo or use your webcam for a live capture.</p></div><span class="tag blue">2-stage ML</span></div>
+        <div class="upload-zone" id="dropZone">
+          <div id="uploadPrompt"><div class="upload-icon">📷</div><b>Choose a leaf image or take a photo</b><div class="sub">PNG, JPG or WEBP • Use a clear, well-lit leaf image</div></div>
+          <img id="leafPreview" alt="Selected leaf preview" hidden>
+        </div>
+        <input type="file" id="leafInput" accept="image/*" hidden>
+        <div class="upload-actions"><button class="secondary" id="chooseImage">▧ Choose Image</button><button class="primary" id="openCamera">◉ Use Webcam</button><button class="ghost" id="analyzeBtn">✦ Analyze with AI</button></div>
+        <div class="status" id="modelStatus">Model setup needed: add your two Teachable Machine model URLs in the setup section below.</div>
+        <div class="result-box" id="diseaseResult"><h3>Analysis result</h3><p class="sub">Your results will appear here after you configure the models and analyze an image.</p></div>
+        <div class="notice">Educational prototype only. Predictions may be wrong and are not a confirmed diagnosis. Seek local agricultural guidance before treating crops.</div>
+      </article>
+      <article class="card">
+        <div class="card-head"><div><h2>Farmer Advisory</h2><p class="sub">Suggestions based on the conditions you enter.</p></div><span class="tag">Rule-based</span></div>
+        <div class="formgrid">
+          <div class="field"><label for="crop">Crop</label><select id="crop"><option>Tomato</option><option>Rice</option><option>Wheat</option><option>Potato</option><option>Cotton</option><option>Maize</option><option>Other</option></select></div>
+          <div class="field"><label for="soil">Soil type</label><select id="soil"><option value="loamy">Loamy</option><option value="clay">Clay</option><option value="sandy">Sandy</option><option value="silty">Silty</option><option value="unknown">Not sure</option></select></div>
+          <div class="field"><label for="temp">Temperature (°C)</label><input id="temp" type="number" value="28" min="-10" max="60"></div>
+          <div class="field"><label for="rain">Recent rainfall (mm)</label><input id="rain" type="number" value="0" min="0" max="1000"></div>
+          <div class="field full"><button class="primary" id="getAdvice" style="width:100%">Generate Crop Advice</button></div>
+        </div>
+        <div id="cropAdvice" class="advice-list" style="margin-top:14px"><div class="advice"><div class="advice-icon">🌱</div><p>Enter your conditions and select Generate Crop Advice.<small>Advice uses transparent demo rules, not a trained AI model.</small></p></div></div>
+      </article>
+    </div>
+    <div class="stack">
+      <article class="card">
+        <div class="card-head"><div><h2>Weather Overview</h2><p class="sub">Current conditions from OpenWeather via your Flask backend.</p></div><span class="tag blue">Live API</span></div>
+        <div class="formgrid">
+          <div class="field"><label for="city">City or town</label><input id="city" value="New Delhi" placeholder="e.g. New Delhi"></div>
+          <div class="field" style="display:flex;align-items:end"><button class="primary" id="getWeather" style="width:100%">Get Weather</button></div>
+        </div>
+        <div class="status" id="weatherStatus">Enter a location and load weather. Internet required.</div>
+        <div id="weatherDisplay" style="margin-top:12px">
+          <div class="weather-row"><div><div class="sub">Temperature</div><div class="weather-temp">—°C</div><div class="sub">No weather loaded</div></div><div style="font-size:40px">🌤️</div></div>
+          <div class="weather-metrics"><div class="weather-metric"><small>Humidity</small><b>—</b></div><div class="weather-metric"><small>Rainfall</small><b>—</b></div><div class="weather-metric"><small>Wind</small><b>—</b></div></div>
+        </div>
+        <div class="notice">Weather is fetched from a public API. Check the forecast and actual field conditions before making farming decisions.</div>
+      </article>
+      <article class="card">
+        <div class="card-head"><div><h2>Smart Irrigation Advisor</h2><p class="sub">Simulated soil moisture + weather context.</p></div><span class="tag gold">No sensor</span></div>
+        <div class="field"><label for="moisture">Simulated soil moisture: <b id="moistureLabel">50%</b></label><input id="moisture" type="range" min="0" max="100" value="50" style="width:100%;accent-color:#16a765"></div>
+        <div class="formgrid" style="margin-top:12px">
+          <div class="field"><label for="irrigationRain">Forecast rain (mm, next 24h)</label><input id="irrigationRain" type="number" min="0" max="500" value="0"></div>
+          <div class="field"><label for="stage">Crop stage</label><select id="stage"><option value="seedling">Seedling</option><option value="growth" selected>Vegetative growth</option><option value="flowering">Flowering / fruiting</option><option value="mature">Mature</option></select></div>
+        </div>
+        <button class="primary" id="irrigateBtn" style="width:100%;margin-top:13px">Check Irrigation Advice</button>
+        <div id="irrigationResult" class="result-box"><h3>Recommendation pending</h3><p class="sub">Adjust the simulated value, then check the advice.</p></div>
+      </article>
+      <article class="card">
+        <div class="card-head"><div><h2>Model Setup</h2><p class="sub">Paste the shareable URLs for your two trained models.</p></div><span class="tag">Setup</span></div>
+        <div class="field"><label for="healthUrl">Model 1 URL — Healthy / Unhealthy</label><input id="healthUrl" type="url" value="https://teachablemachine.withgoogle.com/models/wtHi_ADSE/" autocomplete="off"></div>
+        <div class="field" style="margin-top:10px"><label for="diseaseUrl">Model 2 URL — Disease classes</label><input id="diseaseUrl" type="url" value="https://teachablemachine.withgoogle.com/models/oaObDgYx_/" autocomplete="off"></div>
+        <div class="field" style="margin-top:10px"><label for="healthyClass">Exact healthy class name in Model 1</label><input id="healthyClass" value="Healthy" placeholder="e.g. Healthy"></div>
+        <div class="field" style="margin-top:10px"><label for="unhealthyClass">Exact unhealthy class name in Model 1</label><input id="unhealthyClass" value="Unhealthy" placeholder="e.g. Unhealthy"></div>
+        <button class="secondary" id="loadModels" style="width:100%;margin-top:12px">Load Models</button>
+        <div class="status" id="setupStatus">Model URLs are not stored or sent anywhere by this page.</div>
+      </article>
+    </div>
+  </div>
+</section>
+<section class="section" id="page-disease">
+  <div class="card"><div class="card-head"><div><h2>Crop Disease Detection</h2><p class="sub">Use the upload or webcam panel on Overview to run both models.</p></div><span class="tag blue">Image AI</span></div><p>Model 1 checks whether the leaf is classified as healthy or unhealthy. Model 2 is called only after Model 1 predicts the configured unhealthy class with sufficient confidence.</p><button class="primary" data-goto="overview">Open Detection Panel</button></div>
+</section>
+<section class="section" id="page-advisory">
+  <div class="card"><div class="card-head"><div><h2>Crop Advisory</h2><p class="sub">Enter conditions in the Farmer Advisory panel.</p></div></div><button class="primary" data-goto="overview">Open Crop Advisory</button></div>
+</section>
+<section class="section" id="page-weather">
+  <div class="card"><div class="card-head"><div><h2>Weather & Irrigation</h2><p class="sub">Fetch the forecast and use the irrigation simulator.</p></div></div><button class="primary" data-goto="overview">Open Weather Panel</button></div>
+</section>
+<div class="footer">Saathi • Educational Class XII science exhibition prototype • Verify important decisions with local agricultural experts.</div>
+</div>
+</main>
+</div>
+<div id="cameraModal" role="dialog" aria-modal="true" aria-label="Webcam capture">
+  <div class="modal"><div class="modal-head"><h2>Capture a leaf image</h2><button class="ghost" id="closeCamera">✕ Close</button></div><p class="sub">Allow camera access in your browser. Camera access usually requires localhost or HTTPS.</p><video id="cameraVideo" autoplay playsinline></video><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="primary" id="capturePhoto">Capture Photo</button><button class="ghost" id="switchCamera">Switch Camera</button></div><div id="cameraStatus" class="status"></div></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.3/dist/teachablemachine-image.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
