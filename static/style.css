@@ -19,3 +19,23 @@ main{min-width:0}.topbar{height:78px;background:#fff;border-bottom:1px solid var
 .dash-kpi>span{font-size:23px}.dash-kpi small{color:var(--muted);font-size:12px}.dash-kpi b{font-size:17px;overflow-wrap:anywhere}
 .quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.quick-actions button{text-align:left;min-height:54px}
 @media(max-width:650px){.dashboard-kpis{grid-template-columns:1fr 1fr}.quick-actions{grid-template-columns:1fr}}
+
+/* Live scanner usability */
+#cameraModal .modal{max-height:94vh;overflow:auto}
+#cameraLiveResult{max-height:28vh;overflow:auto}
+#cameraModal video{object-fit:contain}
+
+
+/* Local Ollama farmer guide */
+.ai-status-panel{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;padding:13px;background:#f8fbf9;margin-bottom:14px}.ai-status-panel>div{flex:1;min-width:0}.ai-status-dot{width:11px;height:11px;border-radius:50%;background:#f59e0b;flex-shrink:0}.ai-status-dot.ready{background:#16a765;box-shadow:0 0 0 4px #16a7651d}.ai-status-dot.error{background:#e45858;box-shadow:0 0 0 4px #e458581d}.prompt-chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.prompt-chips button{font-size:12px;padding:8px 10px}.guide-chat{display:grid;gap:12px;max-height:480px;overflow:auto;padding:12px;background:#f7faf8;border:1px solid var(--line);border-radius:15px}.guide-message{max-width:94%;padding:12px 14px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}.guide-message p{margin:5px 0 0}.guide-message.assistant{justify-self:start;background:white;border:1px solid var(--line)}.guide-message.user{justify-self:end;background:#e5f7ed;border:1px solid #c8ecd7}.guide-message small{display:block;color:var(--muted);margin-top:6px}.guide-compose{margin-top:12px}.guide-compose textarea{width:100%;resize:vertical;padding:12px;border:1px solid #dce6e0;border-radius:12px;font:inherit}.guide-compose textarea:focus{outline:2px solid #16a76544;border-color:#45b87e}.guide-compose-footer{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:8px}.guide-compose-footer small{font-size:11px;color:var(--muted);max-width:65%}.context-preview{display:grid;gap:8px}.context-row{display:flex;gap:12px;justify-content:space-between;padding:9px 11px;border:1px solid var(--line);border-radius:10px;font-size:13px}.context-row span{color:var(--muted)}.context-row b{text-align:right;overflow-wrap:anywhere;max-width:60%}.setup-steps{padding-left:22px;color:var(--ink);font-size:13px}.setup-steps li{margin:7px 0}.setup-steps code{background:#f1f5f3;padding:2px 4px;border-radius:4px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:650px){.ai-status-panel{flex-wrap:wrap}.ai-status-panel>div{min-width:65%}.guide-compose-footer{align-items:flex-start;flex-direction:column}.guide-compose-footer small{max-width:100%}.guide-compose-footer button{width:100%}.guide-message{max-width:100%}}
+
+/* Streamlined feature pages and inline AI actions */
+.topbar-title{font-weight:850;font-size:18px;color:#168b54;display:flex;align-items:center;gap:12px}.topbar-title .sub{font-weight:500;font-size:12px;color:var(--muted)}
+.page-section-heading{margin:0 0 16px;padding:18px 20px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 5px 18px #1c44300a}
+.ai-inline-answer{margin-top:11px;padding:13px 14px;border:1px solid #cdebd9;background:#f2faf5;border-radius:13px;color:#243a2d;font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;min-height:44px}
+.ai-inline-answer:empty{display:none}.ai-inline-answer.is-working{color:#667568;background:#f8fbf9;border-style:dashed}
+#dashboardPlanBtn{margin-top:14px;width:100%}.modal-actions{display:flex;gap:10px;flex-wrap:wrap}.modal-actions button{flex:1;min-width:145px}
+.topright{margin-left:auto}
+button:disabled{opacity:.65;cursor:wait}
+@media(max-width:650px){.topbar-title .sub{display:none}.page-section-heading{padding:15px}.topright .pill{display:none}.topbar{justify-content:space-between}}
