@@ -40,7 +40,11 @@ def ollama_status():
         models = payload.get("models", [])
         installed_names = [m.get("name", "") for m in models if isinstance(m, dict)]
         wanted = OLLAMA_MODEL
-        installed = any(name == wanted or name.split(":")[0] == wanted.split(":")[0] and name.endswith(wanted.split(":")[-1]) for name in installed_names)
+        installed = any(
+            name == wanted
+            or (name.split(":")[0] == wanted.split(":")[0] and name.endswith(wanted.split(":")[-1]))
+            for name in installed_names
+        )
         # Ollama may report a canonical tag with :latest; normalize the common exact-tag case.
         installed = installed or wanted in installed_names or (wanted + ":latest") in installed_names
         return jsonify({
@@ -60,8 +64,13 @@ def ollama_status():
             "message": "The local Farmer AI service is not reachable right now.",
         }), 503
     except (ValueError, TypeError):
-        return jsonify({"ok": False, "ollama_running": True, "model": OLLAMA_MODEL,
-                        "model_installed": False, "message": "Ollama returned an unexpected status response."}), 502
+        return jsonify({
+            "ok": False,
+            "ollama_running": True,
+            "model": OLLAMA_MODEL,
+            "model_installed": False,
+            "message": "Ollama returned an unexpected status response.",
+        }), 502
 
 
 @app.post("/api/farmer-guide")
@@ -69,10 +78,16 @@ def farmer_guide():
     """Ask the locally running Qwen model for context-aware farmer guidance."""
     body = request.get_json(silent=True) or {}
     question = str(body.get("question", "")).strip()
+    user_lang = str(body.get("language", "en")).strip().lower()
+    lang_map = {
+        "en": "English",
+        "hi": "Hindi",
+        "bn": "Bengali",
+    }
+    target_language = lang_map.get(user_lang, "English")
+
     if not question:
         return jsonify({"error": "Please enter a question for Saathi."}), 400
-    if len(question) > 1800:
-        return jsonify({"error": "Please keep the question under 1,800 characters."}), 413
 
     raw_context = body.get("context", {})
     if not isinstance(raw_context, dict):
@@ -105,27 +120,31 @@ def farmer_guide():
                 "think": False,
                 "keep_alive": "10m",
                 "messages": [
-                    {"role": "system", "content": (
-                        "You are Saathi, an adaptive farm decision-support guide for small farms, especially in India. "
-                        "Do NOT give a generic repeated template. First interpret the actual question, then use the specific "
-                        "values in the current context to produce a tailored answer. Explicitly mention the relevant measured, "
-                        "forecast, simulated, or AI-predicted values when useful; explain what they imply and give 2-5 concrete "
-                        "next steps in priority order. If moisture is available, interpret it cautiously with crop stage, soil, "
-                        "and rainfall rather than using a universal watering threshold. If weather is available, relate rain, "
-                        "temperature, humidity, and wind to field tasks. If a recent plant scan is available, discuss that exact "
-                        "predicted label and uncertainty, and suggest symptom checks; never call it a confirmed diagnosis. If the "
-                        "user asks about an uploaded image, use the latest plant scan result included in context and say if none "
-                        "is available. Do not claim to see image pixels: only the image-model prediction is provided to you. "
-                        "If data is missing, say which value is missing and still provide useful general guidance. Avoid repeating "
-                        "the same answer across different questions; answer the specific question directly. Use simple language. "
-                        "Prefer low-cost, environmentally responsible integrated pest management and locally suitable practices. "
-                        "Do not prescribe specific pesticide dosages or tank mixes; recommend label directions and local expert advice. "
-                        "Never invent local weather, treat simulated moisture as a sensor measurement, guarantee yield or cures, or "
-                        "replace a local Krishi Vigyan Kendra (KVK), extension worker, or plant pathologist. Keep replies concise "
-                        "(usually 100-220 words), practical, and clear about uncertainty.\n\n"
-                        "Current Saathi farm context (may include simulated fields): "
-                        + json.dumps(context, ensure_ascii=False)
-                    )},
+                    {
+                        "role": "system",
+                        "content": (
+                            f"CRITICAL REQUIREMENT: Formulate your entire response strictly in {target_language}. Do not mix languages. "
+                            "You are Saathi, an adaptive farm decision-support guide for small farms, especially in India. "
+                            "Do NOT give a generic repeated template. First interpret the actual question, then use the specific "
+                            "values in the current context to produce a tailored answer. Explicitly mention the relevant measured, "
+                            "forecast, simulated, or AI-predicted values when useful; explain what they imply and give 2-5 concrete "
+                            "next steps in priority order. If moisture is available, interpret it cautiously with crop stage, soil, "
+                            "and rainfall rather than using a universal watering threshold. If weather is available, relate rain, "
+                            "temperature, humidity, and wind to field tasks. If a recent plant scan is available, discuss that exact "
+                            "predicted label and uncertainty, and suggest symptom checks; never call it a confirmed diagnosis. If the "
+                            "user asks about an uploaded image, use the latest plant scan result included in context and say if none "
+                            "is available. Do not claim to see image pixels: only the image-model prediction is provided to you. "
+                            "If data is missing, say which value is missing and still provide useful general guidance. Avoid repeating "
+                            "the same answer across different questions; answer the specific question directly. Use simple language. "
+                            "Prefer low-cost, environmentally responsible integrated pest management and locally suitable practices. "
+                            "Do not prescribe specific pesticide dosages or tank mixes; recommend label directions and local expert advice. "
+                            "Never invent local weather, treat simulated moisture as a sensor measurement, guarantee yield or cures, or "
+                            "replace a local Krishi Vigyan Kendra (KVK), extension worker, or plant pathologist. Keep replies concise "
+                            "(usually 100-220 words), practical, and clear about uncertainty.\n\n"
+                            "Current Saathi farm context (may include simulated fields): "
+                            + json.dumps(context, ensure_ascii=False)
+                        ),
+                    },
                     *history,
                     {"role": "user", "content": question},
                 ],

@@ -11,28 +11,40 @@
 <aside class="sidebar">
   <div class="brand"><div class="brand-icon">🌱</div><div class="brand-copy"><strong>Saathi</strong><small>Smart Agriculture Companion</small></div></div>
   <nav class="nav" aria-label="Main navigation">
-    <button class="active" data-page="dashboard"><span>▦</span><span class="nav-label">Dashboard</span></button>
-    <button data-page="advisory"><span>♧</span><span class="nav-label">Crop Advisory</span></button>
-    <button data-page="weather"><span>☀</span><span class="nav-label">Weather</span></button>
-    <button data-page="irrigation"><span>💧</span><span class="nav-label">Irrigation</span></button>
-    <button data-page="guide"><span>🧠</span><span class="nav-label">Farmer AI Guide</span></button>
+    <button class="active" data-page="dashboard"><span>📊</span><span class="nav-label" data-i18n="nav_dashboard">Dashboard</span></button>
+    <button data-page="advisory"><span>🌿</span><span class="nav-label" data-i18n="nav_advisory">Crop Advisory</span></button>
+    <button data-page="weather"><span>☀️</span><span class="nav-label" data-i18n="nav_weather">Weather</span></button>
+    <button data-page="irrigation"><span>💧</span><span class="nav-label" data-i18n="nav_irrigation">Irrigation</span></button>
+    <button data-page="guide"><span>🧠</span><span class="nav-label" data-i18n="nav_farmer_ai">Farmer AI Guide</span></button>
   </nav>
   <div class="side-note"><b>🌿 Farming, made smarter</b>Crop checks, local weather, irrigation planning and a context-aware farmer guide in one place.</div>
 </aside>
 <main>
 <header class="topbar">
   <div class="topbar-title">Saathi <span class="sub">Farm assistant</span></div>
-  <div class="topright"><span class="pill">● Services status in Dashboard</span><button class="ghost" id="resetAll" type="button">Reset inputs</button></div>
+  <div class="topright">
+    <span class="pill">● Services status in Dashboard</span>
+    <select id="lang-select" onchange="changeLanguage(this.value)" style="padding: 6px 12px; border-radius: 999px; border: 1px solid #d1d5db; background: #fff; font-size: 0.85rem; font-weight: 600; cursor: pointer; outline: none; margin: 0 8px;">
+      <option value="en" selected>🌐 English</option>
+      <option value="hi">🇮🇳 हिंदी (Hindi)</option>
+      <option value="bn">🌾 বাংলা (Bengali)</option>
+    </select>
+    <button class="ghost" id="resetAll" type="button">Reset inputs</button>
+  </div>
 </header>
 <div class="content">
 <section class="welcome">
-  <div><div class="eyebrow">SMART FARMING</div><h1 id="pageTitle">Saathi Dashboard</h1><p>Turn crop, weather and field observations into practical next steps.</p></div>
+  <div>
+    <div class="eyebrow" data-i18n="smart_farming">SMART FARMING</div>
+    <h1 id="pageTitle" data-i18n="title_dashboard">Saathi Dashboard</h1>
+    <p data-i18n="desc_dashboard">Turn crop, weather and field observations into practical next steps.</p>
+  </div>
 </section>
 <section class="stats">
-  <div class="stat"><div class="stat-icon">🌿</div><div><label>Plant health</label><strong id="statPlant">Not analyzed</strong><small>Latest leaf scan</small></div></div>
-  <div class="stat"><div class="stat-icon">🌦️</div><div><label>Weather</label><strong id="statWeather">Not loaded</strong><small id="statLocation">Waiting for location</small></div></div>
-  <div class="stat"><div class="stat-icon">💧</div><div><label>Soil moisture</label><strong id="statMoisture">50%</strong><small>Simulated input</small></div></div>
-  <div class="stat"><div class="stat-icon">🌾</div><div><label>Crop selected</label><strong id="statCrop">Not set</strong><small>Advisory profile</small></div></div>
+  <div class="stat"><div class="stat-icon">🌿</div><div><label data-i18n="plant_health">Plant health</label><strong id="statPlant" data-i18n="not_analyzed">Not analyzed</strong><small>Latest leaf scan</small></div></div>
+  <div class="stat"><div class="stat-icon">🌦️</div><div><label data-i18n="weather">Weather</label><strong id="statWeather" data-i18n="not_loaded">Not loaded</strong><small id="statLocation">Waiting for location</small></div></div>
+  <div class="stat"><div class="stat-icon">💧</div><div><label data-i18n="soil_moisture">Soil moisture</label><strong id="statMoisture">50%</strong><small data-i18n="simulated_input">Live / Simulated input</small></div></div>
+  <div class="stat"><div class="stat-icon">🌾</div><div><label data-i18n="crop_selected">Crop selected</label><strong id="statCrop" data-i18n="not_set">Not set</strong><small>Advisory profile</small></div></div>
 </section>
 
 <section class="section active" id="page-dashboard">
@@ -62,12 +74,12 @@
     </div>
     <div class="stack">
       <article class="card">
-        <div class="card-head"><div><h2>What do you need today?</h2><p class="sub">Open a tool and take the next step.</p></div></div>
+        <div class="card-head"><div><h2 data-i18n="what_need_today">What do you need today?</h2><p class="sub">Open a tool and take the next step.</p></div></div>
         <div class="quick-actions">
-          <button class="secondary" data-goto="advisory">🌿 Scan a plant / crop care</button>
-          <button class="secondary" data-goto="weather">🌦️ Check local weather</button>
-          <button class="secondary" data-goto="irrigation">💧 Plan irrigation</button>
-          <button class="secondary" data-goto="guide">🧠 Ask Farmer AI</button>
+         <button data-goto="advisory" data-i18n="btn_scan">🌿 Scan a plant / crop care</button>
+         <button data-goto="weather" data-i18n="btn_weather">⛅ Check local weather</button>
+         <button data-goto="irrigation" data-i18n="btn_irrigation">💧 Plan irrigation</button>
+         <button data-goto="guide" data-i18n="btn_ask_ai">🧠 Ask Farmer AI</button>
         </div>
       </article>
       <article class="card">
