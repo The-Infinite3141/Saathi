@@ -214,7 +214,14 @@
 <div id="cameraModal" role="dialog" aria-modal="true" aria-label="Webcam plant scanner">
   <div class="modal"><div class="modal-head"><h2>Live plant scanner</h2><button class="ghost" id="closeCamera" type="button">✕ Close</button></div><p class="sub">Allow camera access and show a potted plant in good light. Saathi checks for a plant before running disease models.</p><video id="cameraVideo" autoplay playsinline muted></video><div id="cameraLiveResult" class="result-box" role="status" aria-live="polite"><h3>Preparing scanner…</h3><p class="sub">Plant models are loading.</p></div><div class="modal-actions"><button class="secondary" id="capturePhoto" type="button">Save current frame</button><button class="ghost" id="switchCamera" type="button">Switch camera</button></div><div id="cameraStatus" class="status"></div></div>
 </div>
-<div class="model-config-hidden" hidden aria-hidden="true"><input id="healthUrl" type="hidden" value="https://teachablemachine.withgoogle.com/models/eySRbLEhO/"><input id="diseaseUrl" type="hidden" value="https://teachablemachine.withgoogle.com/models/iiypUy-Qu/"><input id="healthyClass" type="hidden" value="Healthy"><input id="unhealthyClass" type="hidden" value="Unhealthy"><button id="loadModels" type="button" hidden>Load models</button><div id="setupStatus" hidden></div></div>
+<div class="model-config-hidden" hidden aria-hidden="true">
+  <input id="healthUrl" type="hidden" value="https://teachablemachine.withgoogle.com/models/a2H7-JabE2/">
+  <input id="diseaseUrl" type="hidden" value="https://teachablemachine.withgoogle.com/models/iiypUy-Qu/">
+  <input id="healthyClass" type="hidden" value="Healthy">
+  <input id="unhealthyClass" type="hidden" value="Unhealthy">
+  <button id="loadModels" type="button" hidden>Load models</button>
+  <div id="setupStatus" hidden></div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.3/dist/teachablemachine-image.min.js"></script>

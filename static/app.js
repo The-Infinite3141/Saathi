@@ -181,16 +181,40 @@
   // --- Teachable Machine Models ---
   function normalizeUrl(url){ url = (url || "").trim(); if (url && !url.endsWith("/")) url += "/"; return url; }
   async function loadModels(){
-    if (healthModel && diseaseModel && plantDetector) return true;
-    const u1 = normalizeUrl($("healthUrl")?.value), u2 = normalizeUrl($("diseaseUrl")?.value);
-    if (!u1 || !u2 || !window.tmImage || !window.cocoSsd) return false;
+    if (healthModel && diseaseModel) return true;
+    const u1 = normalizeUrl($("healthUrl")?.value);
+    const u2 = normalizeUrl($("diseaseUrl")?.value);
+
+    if (!u1 || !u2) {
+      if ($("modelStatus")) $("modelStatus").textContent = "Model URLs missing in index.html.";
+      return false;
+    }
+    if (!window.tmImage) {
+      if ($("modelStatus")) $("modelStatus").textContent = "Teachable Machine script not loaded. Check internet.";
+      return false;
+    }
+
+    if ($("modelStatus")) $("modelStatus").textContent = "Loading AI models…";
     try {
       healthModel = await tmImage.load(u1 + "model.json", u1 + "metadata.json");
       diseaseModel = await tmImage.load(u2 + "model.json", u2 + "metadata.json");
-      plantDetector = await cocoSsd.load({ base: "lite_mobilenet_v2" });
+      
+      // Attempt optional plant detector without breaking disease models if it fails
+      if (window.cocoSsd) {
+        cocoSsd.load({ base: "lite_mobilenet_v2" }).then(detector => { plantDetector = detector; }).catch(() => {});
+      }
+
+      if ($("modelStatus")) $("modelStatus").textContent = "Plant models ready.";
       if ($("dashModelStatus")) $("dashModelStatus").textContent = "Models ready.";
+
+      // Automatically run analysis if an image is already selected
+      if (selectedImage) {
+        imgFromUrl(selectedImage.url).then(img => analyzeSource(img)).catch(() => {});
+      }
       return true;
     } catch (e) {
+      console.error("Model load error:", e);
+      if ($("modelStatus")) $("modelStatus").textContent = "Model load failed: " + (e.message || "check internet");
       if ($("dashModelStatus")) $("dashModelStatus").textContent = "Model loading failed.";
       return false;
     }
@@ -199,37 +223,121 @@
   function predict(model, img){ return model.predict(img).then(p => p.sort((a,b) => b.probability - a.probability)); }
   function inferHealthLabels(predictions){
     const labels = predictions.map(p => p.className.trim());
-    let healthy = labels.find(n => /healthy|normal|disease[-_ ]?free/i.test(n) && !/unhealthy|diseased/i.test(n));
-    let unhealthy = labels.find(n => /unhealthy|diseased|sick|blight|spot|rot/i.test(n));
+    // Matches "Healthy", "Healthy Plant", "Normal", etc.
+    let healthy = labels.find(n => /healthy|normal|disease[-_ ]?free/i.test(n) && !/unhealthy|not healthy|diseased?|infected/i.test(n));
+    // Matches "Disease", "Disease Plant", "Diseased", "Unhealthy", "Blight", etc.
+    let unhealthy = labels.find(n => /unhealthy|not healthy|diseased?|infected|sick|blight|spot|rot/i.test(n));
+    
+    if (!healthy && unhealthy) healthy = labels.find(n => n !== unhealthy && !/not a plant/i.test(n));
+    if (!unhealthy && healthy) unhealthy = labels.find(n => n !== healthy && !/not a plant/i.test(n));
     return { healthy, unhealthy };
   }
 
   async function classifyImage(img){
-    const p1 = await predict(healthModel, img), top = p1[0], classes = inferHealthLabels(p1);
-    if (top.probability < confThreshold) return { kind: "uncertain", p1, top };
-    if (classes.healthy && top.className.trim() === classes.healthy) return { kind: "healthy", p1, top };
-    if (classes.unhealthy && top.className.trim() === classes.unhealthy) {
-      const p2 = await predict(diseaseModel, img);
-      return { kind: "disease", p1, p2, top: p2[0], healthTop: top };
+    if (!healthModel || !diseaseModel) throw new Error("AI models are still loading.");
+    const p1 = await predict(healthModel, img);
+    const top = p1[0];
+    const classes = inferHealthLabels(p1);
+
+    // If confidence is below threshold, mark uncertain
+    if (top.probability < confThreshold) {
+      return { kind: "uncertain", p1, top };
     }
+
+    // Check if the top class represents a plant issue / disease
+    const isUnhealthy = (classes.unhealthy && top.className.trim() === classes.unhealthy) ||
+                        /disease|unhealthy|blight|spot|rot|infected/i.test(top.className);
+
+    const isHealthy = (classes.healthy && top.className.trim() === classes.healthy) ||
+                      (/healthy|normal/i.test(top.className) && !isUnhealthy);
+
+    if (isHealthy) {
+      return { kind: "healthy", p1, top, classes };
+    }
+
+    if (isUnhealthy) {
+      // Run Model 2 for specific disease identification
+      const p2 = await predict(diseaseModel, img);
+      return { kind: "disease", p1, p2, top: p2[0], healthTop: top, classes };
+    }
+
     return { kind: "uncertain", p1, top };
   }
 
-  async function analyzeSource(img){
-    if (!healthModel || !diseaseModel) return;
+async function analyzeSource(img){
+    if (!healthModel || !diseaseModel) {
+      if ($("diseaseResult")) $("diseaseResult").innerHTML = "<h3>Loading models…</h3><p class='sub'>Starting AI vision models…</p>";
+      const ready = await loadModels();
+      if (!ready) return;
+    }
     if ($("analyzeBtn")) $("analyzeBtn").disabled = true;
+    if ($("diseaseResult")) $("diseaseResult").innerHTML = "<h3>Analyzing leaf…</h3><p class='sub'>Running health and disease screening…</p>";
+
     try {
       const r = await classifyImage(img);
-      const label = r.kind === "disease" ? r.top.className : (r.kind === "healthy" ? r.top.className : r.top.className + " (uncertain)");
+      let html = "";
+      let label = "";
+
+      if (r.kind === "healthy") {
+        label = "Likely healthy: " + r.top.className;
+        html = `<h3>🌿 Likely Healthy</h3><p class='sub'>Model classified leaf as ${escapeHtml(r.top.className)} (${(r.top.probability * 100).toFixed(1)}%).</p>` + predictionRows(r.p1, "Model 1 · Health");
+      } else if (r.kind === "disease") {
+        label = "Possible disease: " + r.top.className;
+        html = `<h3>🔎 Possible Issue: ${escapeHtml(r.top.className)}</h3><p class='sub'>Detected symptoms: ${escapeHtml(r.top.className)} (${(r.top.probability * 100).toFixed(1)}%).</p>` +
+               predictionRows(r.p1, "Model 1 · Health") + predictionRows(r.p2, "Model 2 · Symptoms") +
+               `<div class='notice'>AI screening aid only. Verify with local agricultural experts before treatment.</div>`;
+      } else {
+        label = r.top.className + " (uncertain)";
+        html = `<h3>⚠️ Inconclusive</h3><p class='sub'>Confidence is below 70%. Ensure the leaf is centered in good lighting.</p>` + predictionRows(r.p1, "Model 1 · Health");
+      }
+
+      if ($("diseaseResult")) $("diseaseResult").innerHTML = html;
       if ($("statPlant")) $("statPlant").textContent = label;
-      lastPlantResult = { label, kind: r.kind, source: "uploaded image", at: new Date().toLocaleTimeString() };
+      lastPlantResult = { label, kind: r.kind, source: "uploaded leaf", at: new Date().toLocaleTimeString() };
       syncDashboard();
       refreshGuideContext();
+      logActivity("Leaf image analyzed", label);
     } catch (e) {
       console.error(e);
+      if ($("diseaseResult")) $("diseaseResult").innerHTML = "<h3>Analysis failed</h3><p class='sub'>" + escapeHtml(e.message || "Model error") + "</p>";
     } finally {
       if ($("analyzeBtn")) $("analyzeBtn").disabled = false;
     }
+  }
+
+  function predictionRows(ps, title){
+    let h = title ? `<div class='result-line'><b>${escapeHtml(title)}</b><span>Confidence</span></div>` : "";
+    ps.slice(0, Math.min(4, ps.length)).forEach(p => {
+      const pct = (p.probability * 100);
+      h += `<div class='result-line'><span>${escapeHtml(p.className)}</span><b>${pct.toFixed(1)}%</b></div>
+            <div class='meter'><span style='width:${Math.max(0, Math.min(100, pct))}%'></span></div>`;
+    });
+    return h;
+  }
+
+  function imgFromUrl(url){ 
+    return new Promise((res, rej) => { 
+      const img = new Image(); 
+      img.crossOrigin = "anonymous";
+      img.onload = () => res(img); 
+      img.onerror = rej; 
+      img.src = url; 
+    }); 
+  }
+
+  if ($("analyzeBtn")) {
+    $("analyzeBtn").onclick = async () => {
+      if (!selectedImage) {
+        if ($("diseaseResult")) $("diseaseResult").innerHTML = "<h3>No image selected</h3><p class='sub'>Choose an image first.</p>";
+        return;
+      }
+      try {
+        const img = await imgFromUrl(selectedImage.url);
+        await analyzeSource(img);
+      } catch (err) {
+        if ($("diseaseResult")) $("diseaseResult").innerHTML = "<h3>Image error</h3><p class='sub'>Could not load image.</p>";
+      }
+    };
   }
 
   function imgFromUrl(url){ return new Promise((res, rej) => { const img = new Image(); img.onload = () => res(img); img.onerror = rej; img.src = url; }); }
@@ -237,24 +345,68 @@
 
   function escapeHtml(s){ return String(s || "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); }
 
-  // --- Weather ---
+  
+
+// --- Weather ---
+  function weatherDescription(text){ return text || "Current conditions"; }
+
+  function renderWeather(d){
+    if (!d || !d.current) return;
+    const c = d.current;
+    const place = (d.location?.name || "Local") + (d.location?.country ? ", " + d.location.country : "");
+    if ($("weatherDisplay")) {
+      $("weatherDisplay").innerHTML = 
+        `<div class='weather-row'>
+          <div>
+            <div class='sub'>${escapeHtml(place)}</div>
+            <div class='weather-temp'>${Math.round(c.temp)}°C</div>
+            <div class='sub'>${escapeHtml(weatherDescription(c.description))}</div>
+          </div>
+          <div style='font-size:42px'>${escapeHtml(c.icon_emoji || "🌦️")}</div>
+        </div>
+        <div class='weather-metrics'>
+          <div class='weather-metric'><small>Humidity</small><b>${c.humidity}%</b></div>
+          <div class='weather-metric'><small>Rain (last hr)</small><b>${Number(d.rain_1h_mm || 0).toFixed(1)} mm</b></div>
+          <div class='weather-metric'><small>Wind</small><b>${Number(c.wind_speed_kmh || 0).toFixed(1)} km/h</b></div>
+          <div class='weather-metric'><small>Forecast (24h)</small><b>${Number(d.rain_next_24h_mm || 0).toFixed(1)} mm</b></div>
+        </div>`;
+    }
+    if ($("weatherStatus")) $("weatherStatus").textContent = "Updated for " + place;
+    if ($("statWeather")) $("statWeather").textContent = Math.round(c.temp) + "°C";
+    if ($("statLocation")) $("statLocation").textContent = place;
+    if ($("temp")) $("temp").value = c.temp;
+    if ($("rain")) $("rain").value = Number(d.rain_1h_mm || 0).toFixed(1);
+    if ($("irrigationRain")) $("irrigationRain").value = Number(d.rain_next_24h_mm || 0).toFixed(1);
+  }
+
   if ($("getWeather")) $("getWeather").onclick = () => fetchWeatherByCity();
+
   async function fetchWeatherByCity(){
     const city = $("city")?.value.trim();
-    if (!city) return;
+    if (!city) {
+      if ($("weatherStatus")) $("weatherStatus").textContent = "Please enter a town or city name.";
+      return;
+    }
+    const btn = $("getWeather");
+    if (btn) { btn.disabled = true; btn.textContent = "Fetching…"; }
+    if ($("weatherStatus")) $("weatherStatus").textContent = "Fetching weather for " + city + "…";
+    
     try {
       const res = await fetch("/api/weather?city=" + encodeURIComponent(city));
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || "Weather request failed");
       currentWeather = data;
-      if ($("statWeather")) $("statWeather").textContent = Math.round(data.current.temp) + "°C";
-      syncDashboard();
-      refreshGuideContext();
+      renderWeather(data);
+      try { syncDashboard(); } catch(e){}
+      try { refreshGuideContext(); } catch(e){}
     } catch(err) {
       console.error(err);
+      if ($("weatherStatus")) $("weatherStatus").textContent = "Weather unavailable: " + err.message;
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Fetch Weather for Town"; }
     }
   }
-
+  
   // --- Crop Advice & Irrigation ---
   function generateCropAdvice(record = false){
     const crop = $("crop")?.value || "";
@@ -285,22 +437,52 @@
   }
 
   // --- AI Context & Guide ---
-  function buildGuideContext(){
+function buildGuideContext(){
+    const current = currentWeather?.current || null;
     return {
       crop: $("crop")?.value || "Not set",
       soil: $("soil")?.value || null,
       temperature_c: $("temp") ? Number($("temp").value) : null,
+      recent_rain_mm: $("rain") ? Number($("rain").value) : null,
+      forecast_rain_mm: $("irrigationRain") ? Number($("irrigationRain").value) : (currentWeather ? Number(currentWeather.rain_next_24h_mm || 0) : null),
+      current_weather: current ? `${current.description || "Current conditions"}, ${Math.round(Number(current.temp))}°C` : null,
+      humidity_percent: current ? current.humidity : null,
+      wind_kmh: current ? current.wind_speed_kmh : null,
       soil_moisture_percent: $("moisture") ? Number($("moisture").value) : null,
-      last_plant_result: lastPlantResult ? lastPlantResult.label : null
+      crop_stage: $("stage")?.value || null,
+      last_plant_result: lastPlantResult ? `${lastPlantResult.label} (${lastPlantResult.kind}; scanned ${lastPlantResult.at || "recently"})` : null,
+      location: currentWeather?.location ? `${currentWeather.location.name || ""}${currentWeather.location.country ? ", " + currentWeather.location.country : ""}` : null
     };
   }
 
   function refreshGuideContext(){
-    const holder = $("guideContextPreview");
-    if (!holder) return;
-    const ctx = buildGuideContext();
-    holder.innerHTML = `<div class="context-row"><span>Crop</span><b>${escapeHtml(ctx.crop)}</b></div>` +
-                       `<div class="context-row"><span>Moisture</span><b>${ctx.soil_moisture_percent}%</b></div>`;
+    try {
+      const holder = $("guideContextPreview");
+      if (!holder) return;
+      const ctx = buildGuideContext();
+      holder.innerHTML = 
+        `<div class="context-row"><span>Crop</span><b>${escapeHtml(ctx.crop)}</b></div>` +
+        `<div class="context-row"><span>Moisture</span><b>${ctx.soil_moisture_percent ?? 50}%</b></div>` +
+        `<div class="context-row"><span>Weather</span><b>${escapeHtml(ctx.current_weather || "Not loaded")}</b></div>` +
+        `<div class="context-row"><span>Last Scan</span><b>${escapeHtml(ctx.last_plant_result || "None")}</b></div>`;
+    } catch (e) {
+      console.warn("Context refresh bypassed:", e);
+    }
+  }
+
+  async function checkOllamaStatus(){
+    const dot = $("ollamaStatusDot"), title = $("ollamaStatusTitle"), detail = $("ollamaStatusText");
+    try {
+      const res = await fetch("/api/ollama/status", { cache: "no-store" });
+      const data = await res.json();
+      if (dot) dot.className = "ai-status-dot " + (data.ok ? "ready" : "error");
+      if (title) title.textContent = data.ok ? "Farmer AI is ready" : "Farmer AI offline";
+      if (detail) detail.textContent = data.message || "Ollama status checked.";
+    } catch (e) {
+      if (dot) dot.className = "ai-status-dot error";
+      if (title) title.textContent = "Farmer AI offline";
+      if (detail) detail.textContent = "Start Ollama on your PC to enable AI advice.";
+    }
   }
 
   function addGuideMessage(role, content){
@@ -308,7 +490,7 @@
     if (!log) return;
     const bubble = document.createElement("div");
     bubble.className = "guide-message " + (role === "user" ? "user" : "assistant");
-    bubble.innerHTML = `<b>${role === "user" ? "You" : "Saathi"}</b><p>${escapeHtml(content)}</p>`;
+    bubble.innerHTML = `<b>${role === "user" ? "You" : "Saathi · Qwen"}</b><p>${escapeHtml(content)}</p>`;
     log.appendChild(bubble);
     log.scrollTop = log.scrollHeight;
   }
@@ -337,7 +519,7 @@
       addGuideMessage("assistant", data.answer || "No response received.");
       guideMessages.push({ role: "assistant", content: data.answer || "" });
     } catch(err) {
-      addGuideMessage("assistant", "Farmer AI is currently unavailable.");
+      addGuideMessage("assistant", "Farmer AI is currently unavailable. Check that Ollama is running.");
     } finally {
       guideBusy = false;
     }
@@ -357,6 +539,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question,
+          context: buildGuideContext(), // <-- Now included!
           language: window.currentLanguage || "en"
         })
       });
@@ -369,7 +552,6 @@
       delete button.dataset.busy;
     }
   }
-
   // --- Attach AI Event Listeners ---
   document.querySelectorAll("[data-ai-action]").forEach(btn => btn.addEventListener("click", () => runInlineAI(btn)));
   $("guideForm")?.addEventListener("submit", e => { e.preventDefault(); sendGuideQuestion(); });
